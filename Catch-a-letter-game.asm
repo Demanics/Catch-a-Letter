@@ -140,6 +140,43 @@ no_sub:
     pop di
     ret
 
+GenerateHomeScreen:
+	call clrscr
+	call effects
+    push ax
+
+    mov ax, 27
+    push ax
+    mov ax, 10
+    push ax
+    mov ax, 12
+    push ax
+    mov ax, str3
+    push ax
+    call printstr
+
+    mov ax, 34
+    push ax
+    mov ax, 12
+    push ax
+    mov ax, 12
+    push ax
+    mov ax, str4
+    push ax
+    call printstr
+
+    mov ax, 22
+    push ax
+    mov ax, 16
+    push ax
+    mov ax, 141
+    push ax
+    mov ax, str5
+    push ax
+    call printstr
+
+    pop ax
+    ret
 
 start:
     mov ax, 0x4c00
