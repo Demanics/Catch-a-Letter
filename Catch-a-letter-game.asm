@@ -35,6 +35,110 @@ clock:      dw 0
 difficulty: dw 0
 board_location:     dw 3728, 3766
 
+delay:
+    push cx
+    mov cx, 0xffff
+sleep:
+    loop sleep
+    pop cx
+    ret
+
+printstr:
+    push bp
+    mov bp, sp
+    push es
+    push ax
+    push cx
+    push si
+    push di
+
+    push ds
+    pop es
+    mov di, [bp+4]
+    mov cx, 0xffff
+    xor al, al
+    repne scasb
+    mov ax, 0xffff
+    sub ax, cx
+    dec ax
+    jz exit
+
+    mov cx, ax
+    mov ax, 0xb800
+    mov es, ax
+    mov al, 80
+    mul byte [bp+8]
+    add ax, [bp+10]
+    shl ax, 1
+    mov di,ax
+    mov si, [bp+4]
+    mov ah, [bp+6]
+    cld
+
+nextchar:
+    call delay
+    call delay
+    call delay
+    lodsb
+    stosw
+    loop nextchar
+exit:
+    pop di
+    pop si
+    pop cx
+    pop ax
+    pop es
+    pop bp
+    ret 8
+
+effects:
+    push di
+    push es
+    push bx
+    push cx
+    push dx
+    push ax
+
+    mov cx, 15
+    push 0xb800
+    pop es
+
+char_effect:
+    xor di, di
+    xor dx, dx
+
+    sub sp, 2
+    push 7    
+    call randG
+    pop ax
+    inc ax
+
+    sub sp, 2
+    push 25      
+    call randG
+    pop dx
+    add dx, 0x41
+    mov dh, al
+
+    sub sp, 2
+    push 1460
+    call randG
+    pop di
+    test di, 1
+    jz no_sub
+    sub di, 1
+
+no_sub:
+    mov [es:di], dx
+    loop char_effect
+
+    pop ax
+    pop dx
+    pop cx
+    pop bx
+    pop es
+    pop di
+    ret
 
 
 start:
