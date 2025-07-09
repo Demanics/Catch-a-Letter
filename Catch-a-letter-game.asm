@@ -178,6 +178,254 @@ GenerateHomeScreen:
     pop ax
     ret
 
+
+move_left:
+    push ax
+    push cx
+    push es
+    push di
+    push 0xb800
+    pop es
+    mov ax, [board_location+2]
+    mov di, [board_location]
+    cmp di, 3682
+    jle no_change_left
+    sub di, 2
+box_left_space:
+    add di, 2
+    mov word[es:di],0x0720
+    cmp di, ax
+    jne box_left_space
+    mov di, [board_location]
+    sub di, 2
+    sub ax, 2
+    mov [board_location], di
+    mov [board_location+2], ax
+    mov di, [board_location]
+    sub di, 2
+box_left_move:
+    add di, 2
+    mov word[es:di], 0x0DDC
+    cmp di, ax
+    jne box_left_move
+no_change_left:
+    pop di
+    pop es
+    pop cx
+    pop ax
+    ret
+
+move_right:
+    push ax
+    push cx
+    push es
+    push di
+    push 0xb800
+    pop es
+    mov ax, [board_location+2]
+    mov di, [board_location]
+    cmp ax, 3796
+    jge no_change_right
+    sub di, 2
+box_right_space:
+    add di, 2
+    mov word[es:di],0x0720
+    cmp di, ax
+    jne box_right_space
+    mov di, [board_location]
+    add di, 2
+    add ax, 2
+    mov [board_location], di
+    mov [board_location+2], ax
+    mov di, [board_location]
+    sub di, 2
+box_right_move:
+    add di, 2
+    mov word[es:di], 0x0DDC
+    cmp di, ax
+    jne box_right_move
+no_change_right:
+    pop di
+    pop es
+    pop cx
+    pop ax
+    ret
+
+clrscr:
+    push es
+    push ax
+    push cx
+    push di
+    mov ax, 0xb800
+    mov es, ax
+    xor di, di
+
+    mov ax, 0x0720
+    mov cx, 2000
+    cld
+    rep stosw
+    pop di
+    pop cx
+    pop ax
+    pop es
+    ret
+
+print_char:
+    push bp
+    mov bp, sp
+    push di
+    push es
+    push dx
+
+    push 0xb800
+    pop es
+    mov di, [bp+4]
+    mov dx, [bp+6]
+    mov [es:di], dx
+
+    pop dx
+    pop es
+    pop di
+    pop bp
+    ret 4
+
+printnum:
+    push bp
+    mov bp, sp
+    push es
+    push ax
+    push bx
+    push cx
+    push dx
+    push di
+
+    mov ax, 0xb800
+    mov es, ax
+    mov ax, [bp+4]
+    mov bx, 10
+    mov cx, 0
+nextdigit:
+    mov dx, 0
+    div bx
+    add dl, 0x30
+    push dx
+    inc cx
+    cmp ax, 0
+    jnz nextdigit
+    mov di, [bp+6]
+nextpos:
+    pop dx
+    mov ax, [bp+8]
+    mov dh, ah 
+    mov [es:di], dx
+    add di, 2
+    loop nextpos
+
+    pop di
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    pop es
+    pop bp
+    ret 6
+
+re_intialize:
+    push bp
+    mov bp, sp
+    push ax
+    push bx
+    push di
+
+    mov bx, [bp+4]
+    sub sp, 2
+    push 25      
+    call randG
+    pop ax
+    add ax, 0x41
+    mov ah, 0100b
+    mov [chars+bx], ax
+
+    xor ax, ax
+    sub sp, 2
+    push 8
+    call randG
+	call more_difficult
+    pop ax
+    add ax, 1
+    mov [timer+bx], ax
+    ;call remove_redundancy
+
+    sub sp, 2
+    push 114
+    call randG
+    pop di
+    test di, 1
+    jz no_addition
+    sub di, 1
+no_addition:
+	add di,162
+    mov [pos+bx], di
+    push word[chars+bx]
+    push word[pos+bx]
+    call print_char
+
+    pop di
+    pop bx
+    pop ax
+    pop bp
+    ret 2
+
+endscreen:
+	call clrscr
+	call effects
+    mov ax, 30
+    push ax
+    mov ax, 10
+    push ax
+    mov ax, 12
+    push ax
+    mov ax, line7
+    push ax
+    call printstr
+
+    mov ax, 27
+    push ax
+    mov ax, 12
+    push ax
+    mov ax, 12
+    push ax
+    mov ax, line8
+    push ax
+    call printstr
+
+    mov ax, 28
+    push ax
+    mov ax, 14
+    push ax
+    mov ax, 12
+    push ax
+    mov ax, line10
+    push ax
+    call printstr
+
+    push 0x0C00
+    push 2324
+    push word[score]
+    call printnum
+
+    mov ax, 26
+    push ax
+    mov ax, 18
+    push ax
+    mov ax, 3
+    push ax
+    mov ax, line9
+    push ax
+    call printstr
+
+    ret
+
 start:
     mov ax, 0x4c00
     int 0x21
