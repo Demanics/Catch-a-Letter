@@ -863,6 +863,7 @@ endscreen:
 
     ret
 
+<<<<<<< HEAD
 remove_redundancy:
     push dx
     push cx
@@ -967,6 +968,304 @@ end_more_difficulty:
 	pop bp
 	ret
 
+=======
+score_board:
+    push es
+    push ax
+    push bp
+    push bx
+    push cx
+    push dx
+
+    push es
+    mov ax, 0xb800
+    mov es, ax
+    mov di, 120
+    mov cx, 20
+    mov dx, 25
+board:
+    mov word[es:di], 0x2020
+    add di, 2
+    loop board
+
+    add di, 120
+    mov cx, 20
+    dec dx
+    cmp dx, 0
+    jnz board
+
+    mov di, [board_location]
+    sub di, 2
+box:
+    add di, 2
+    mov word[es:di], 0x0DDC
+    cmp di, [board_location+2]
+    jne box
+
+    pop es
+
+	
+	mov ah, 0x13
+    mov al, 1
+    mov bh, 0
+    mov bl, 0x3E
+    mov dx, 141
+    mov cx, 16
+    push cs
+    pop es
+    mov bp, Title1
+    int 0x10
+
+    mov ah, 0x13
+    mov al, 1
+    mov bh, 0
+    mov bl, 0x3E
+    mov dx, 477
+    mov cx, 13
+    push cs
+    pop es
+    mov bp, Line1
+    int 0x10
+	
+	mov ah, 0x13
+    mov al, 1
+    mov bh, 0
+    mov bl, 0x3E
+    mov dx, 733
+    mov cx, 10
+    push cs
+    pop es
+    mov bp, Line2
+    int 0x10
+	
+	mov ah, 0x13
+    mov al, 1
+    mov bh, 0
+    mov bl, 0x3E
+    mov dx, 1245
+    mov cx, 13
+    push cs
+    pop es
+    mov bp, Line3
+    int 0x10
+	
+	mov ah, 0x13
+    mov al, 1
+    mov bh, 0
+    mov bl, 0x3E
+    mov dx, 1501
+    mov cx, 14
+    push cs
+    pop es
+    mov bp, Line4
+    int 0x10
+	
+	mov ah, 0x13
+    mov al, 1
+    mov bh, 0
+    mov bl, 0x3E
+    mov dx, 2013
+    mov cx, 4
+    push cs
+    pop es
+    mov bp, Line5
+    int 0x10
+	
+	mov ah, 0x13
+    mov al, 1
+    mov bh, 0
+    mov bl, 0x3E
+    mov dx, 2269
+    mov cx, 16
+    push cs
+    pop es
+    mov bp, Line6
+    int 0x10
+	
+	mov ah, 0x13
+    mov al, 1
+    mov bh, 0
+    mov bl, 0x3E
+    mov dx, 3037
+    mov cx, 11
+    push cs
+    pop es
+    mov bp, str1
+    int 0x10
+	
+	mov ah, 0x13
+    mov al, 1
+    mov bh, 0
+    mov bl, 0x3E
+    mov dx, 3293
+    mov cx, 6
+    push cs
+    pop es
+    mov bp, str2
+    int 0x10
+	
+	mov ah, 0x13
+    mov al, 1
+    mov bh, 0
+    mov bl, 0x3E
+    mov dx, 3549
+    mov cx, 6
+    push cs
+    pop es
+    mov bp, str6
+    int 0x10
+	
+    push 0x3E00
+	push 2374
+    mov ax, [score]
+    push ax
+    call printnum
+	
+	push 0x3E00
+	push 2534
+    mov ax, [lives]
+    push ax
+    call printnum
+	
+
+    pop dx
+    pop cx
+    pop bx
+    pop bp
+    pop ax
+    pop es
+    ret
+	
+print_border:
+	call clrscr
+	pusha
+	push 0xb800
+	pop es
+	mov ax, 0x2020  
+	
+	mov cx,60
+	mov di,0
+	top:
+		stosw
+		loop top
+	
+	mov cx,25
+	sub di,2
+	right:
+		stosw
+		add di,158
+		loop right
+	
+	sub di,160
+	mov cx,60
+	bottom:
+		stosw
+		sub di,4
+		loop bottom
+	
+	mov cx,25
+	add di,2
+	left:
+		stosw
+		sub di,162
+		loop left;
+	
+	popa
+	ret
+
+
+kbisr:
+    push ax
+    push es
+
+    mov ax, 0xb800
+    mov es, ax
+
+    in al, 0x60
+    cmp al, 0x4B
+    jne nextcmp
+
+    call move_left
+    jmp nomatch
+
+nextcmp:
+    cmp al, 0x4D
+    jne nomatch
+    call move_right
+
+nomatch:
+    pop es
+    pop ax
+    jmp far [cs:oldisr]
+
+move_box:
+    push cx
+    push ax
+    push es
+
+    xor ax, ax
+    mov es, ax
+    mov ax, [es:9*4]
+    mov [oldisr], ax
+    mov ax, [es:9*4+2]
+    mov [oldisr+2], ax
+    cli
+    mov word [es:9*4], kbisr
+    mov [es:9*4+2], cs
+    sti
+
+    call game_play
+    mov ax, [oldisr]
+    mov bx, [oldisr+2]
+    cli
+    mov [es:9*4],ax
+    mov [es:9*4+2],bx
+    sti
+
+    mov ax, [old_int8]
+    mov bx, [old_int8+2]
+    cli
+    mov [es:8*4],ax
+    mov [es:8*4+2],bx
+    sti
+
+    pop es
+    pop ax
+    pop cx
+    ret
+
+randG:
+    push bp
+    mov bp, sp
+    pusha
+    cmp word [rand], 0
+    jne next
+
+    MOV AH, 00h   ; interrupt to get system timer in CX:DX
+    INT  1AH
+    inc word [rand]
+    mov     [randnum], dx
+    jmp next1  
+
+    next:
+    mov     ax, 25173          ; LCG Multiplier
+    mul     word  [randnum]     ; DX:AX = LCG multiplier * seed
+    add     ax, 13849          ; Add LCG increment value
+    ; Modulo 65536, AX = (multiplier*seed+increment) mod 65536
+    mov     [randnum], ax          ; Update seed = return value
+
+    next1:
+    xor dx, dx
+    mov ax, [randnum]
+    mov cx, [bp+4]
+    inc cx
+    div cx
+
+    mov [bp+6], dx
+    popa
+    pop bp
+    ret 2
+>>>>>>> 6d72144ff84ed9ba039fc0f75ff9155ef507e3bd
 
 start:
 	call GenerateHomeScreen
